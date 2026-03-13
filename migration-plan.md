@@ -6,7 +6,7 @@ NgVideo is a modularized HTML5 video player library (~2,023 lines) built with An
 
 ---
 
-## Phase 0: Project Scaffolding & Hybrid Bootstrap
+## Phase 0: Project Scaffolding & Hybrid Bootstrap ✅ COMPLETE
 
 Set up Angular 17 alongside the existing AngularJS app using NgUpgrade.
 
@@ -28,7 +28,7 @@ Set up Angular 17 alongside the existing AngularJS app using NgUpgrade.
 
 ---
 
-## Phase 1: Core Service & Constants Migration
+## Phase 1: Core Service & Constants Migration ✅ COMPLETE
 
 Migrate the foundation that all directives depend on.
 
@@ -198,7 +198,7 @@ Migrate directives that contain/manage child directives.
 
 ---
 
-## Phase 5: Playwright E2E Tests
+## Phase 5: Playwright E2E Tests ✅ COMPLETE
 
 Create e2e tests that verify the website works. These should be written **before Phase 1** and run after each phase to catch regressions.
 

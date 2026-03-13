@@ -106,3 +106,13 @@ The original app served media files from `example/media/` via Express static fil
 { "glob": "**/*", "input": "example/media", "output": "/media" }
 ```
 Without this, video files won't load and the player will appear broken.
+
+### 15. `bootstrap: [AppComponent]` prevents `ngDoBootstrap()` from running
+
+When the `@NgModule` decorator has `bootstrap: [AppComponent]`, Angular handles bootstrapping automatically and **does NOT call `ngDoBootstrap()`**. This means `this.upgrade.bootstrap(document.body, ['videoApp'])` never executes, and AngularJS never compiles the template — all `{{expressions}}` render as raw text, directives don't initialize, and no scopes are created.
+
+**Fix:** Remove `bootstrap: [AppComponent]` from the NgModule decorator. `ngDoBootstrap()` is only called when the `bootstrap` array is empty. In hybrid mode, AngularJS manages the root template, so there's no need to bootstrap an Angular root component.
+
+### 16. Playwright `channel: 'chrome'` avoids browser compatibility issues
+
+The bundled Chromium from Playwright 1.40 (chromium-1091) crashes on macOS Sequoia with "Target page, context or browser has been closed". Using `channel: 'chrome'` in the Playwright config to use the system-installed Chrome avoids this entirely and removes the need to download a separate browser binary.
