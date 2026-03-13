@@ -45,6 +45,79 @@ import { VideoOptions } from '../../models/video-source.model';
       </a>
     </section>
   `,
+  styles: [`
+    :host {
+      top: 0;
+      left: 0;
+      position: absolute;
+      pointer-events: none;
+      z-index: 4;
+      width: 100%;
+      height: 100%;
+    }
+    span.buffering {
+      color: white;
+      font-size: 12px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 18px 0 0 45px;
+    }
+    section.loading {
+      position: absolute;
+      top: 39px;
+      left: 5px;
+      width: 538px;
+      height: 260px;
+      color: white;
+      text-shadow: 1px 1px 0 rgba(0, 0, 0, .25);
+      font-size: 12px;
+      pointer-events: all;
+      z-index: 201;
+      padding: 13px 0 0 40px;
+      background-color: rgba(0, 0, 0, .25);
+    }
+    section.generic {
+      position: absolute;
+      bottom: 11px;
+      right: 10px;
+      z-index: 90;
+      width: 100%;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: rgba(255, 255, 255, .5);
+    }
+    section.generic a {
+      text-transform: none;
+      color: rgba(255, 255, 255, .75);
+      pointer-events: all;
+    }
+    section.generic a:hover {
+      text-decoration: none;
+    }
+    section.duration {
+      background-color: rgba(0, 0, 0, .15);
+      color: rgba(255, 255, 255, .5);
+      padding: 2px 5px;
+      border-radius: 3px 0 0 3px;
+      position: absolute;
+      font-size: 11px;
+      bottom: 62px;
+      right: 83px;
+    }
+    section.title {
+      background-color: #dd4b39;
+      font-size: 11px;
+      position: absolute;
+      color: white;
+      opacity: .8;
+      padding: 2px 5px;
+      border-radius: 0 3px 3px 0;
+      bottom: 62px;
+      right: 33px;
+    }
+  `],
 })
 export class FeedbackComponent implements OnInit, OnDestroy {
   duration = 0;

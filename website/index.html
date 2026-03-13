@@ -34,19 +34,10 @@
             font-size: 14px;
         }
 
-        .demo-frame-container {
-            width: 570px;
+        .demo-container {
+            width: 550px;
+            height: 310px;
             margin: 30px auto;
-            background-color: white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, .25);
-            border: 1px solid lightgray;
-            padding: 5px;
-        }
-
-        .demo-frame-container iframe {
-            width: 100%;
-            height: 340px;
-            border: none;
         }
 
         .instructions {
@@ -99,51 +90,47 @@
 <body>
 
     <h1>ngVideo
-        <small>Angular video player component &mdash; migrated from AngularJS</small>
+        <small>Angular video player Web Component &mdash; powered by Angular Elements</small>
     </h1>
 
-    <section class="demo-frame-container">
-        <iframe src="../dist/ng-video-angular/index.html"></iframe>
+    <section class="demo-container">
+        <ng-video class="video" id="player">
+            <vi-controls class="controls"></vi-controls>
+            <vi-feedback class="feedback"></vi-feedback>
+            <vi-playlist class="playlist"></vi-playlist>
+        </ng-video>
     </section>
 
     <section class="instructions">
         <h3>Quick Start</h3>
-        <p>Build the Angular app, then open this page to see the demo:</p>
+        <p>Build the Web Components bundle, then open this page to see the demo:</p>
         <pre><code>npm install
-ng build
+npm run build:elements
 # open website/index.html in a browser</code></pre>
 
-        <p>Or run the dev server directly:</p>
-        <pre><code>ng serve
-# visit http://localhost:4200</code></pre>
+        <h3>Usage</h3>
+        <p>Include the bundle script and use the custom elements in any HTML page:</p>
+        <pre><code>&lt;script src="ng-video-bundle.js"&gt;&lt;/script&gt;
 
-        <h3>Component Usage</h3>
-        <p>The video player is composed of Angular components:</p>
-        <pre><code>&lt;ng-video class="video"&gt;
-
+&lt;ng-video class="video" id="player"&gt;
   &lt;vi-controls class="controls"&gt;&lt;/vi-controls&gt;
-
   &lt;vi-feedback class="feedback"&gt;&lt;/vi-feedback&gt;
+  &lt;vi-playlist class="playlist"&gt;&lt;/vi-playlist&gt;
+&lt;/ng-video&gt;
 
-  &lt;vi-playlist class="playlist"
-               [videos]="playlistItems"
-               [videoNameFn]="getVideoName"
-               (selectVideo)="onVideoSelect($event)"
-               (close)="playlistOpen = false"&gt;
-  &lt;/vi-playlist&gt;
+&lt;script&gt;
+  customElements.whenDefined('ng-video').then(() =&gt; {
+    const player = document.getElementById('player');
+    player.addSource('mp4', 'https://example.com/video.mp4');
+  });
+&lt;/script&gt;</code></pre>
 
-&lt;/ng-video&gt;</code></pre>
-
-        <h3>Adding Videos</h3>
-        <p>Use <code>VideoService</code> to add sources to the playlist:</p>
-        <pre><code>import { VideoService } from './services/video.service';
-
-constructor(private videoService: VideoService) {}
-
-ngOnInit() {
-  this.videoService.addSource('mp4', 'https://example.com/video.mp4');
-  this.videoService.addSource('mp4', 'https://example.com/video2.mp4');
-}</code></pre>
+        <h3>Configuration</h3>
+        <p>Set options before loading the script:</p>
+        <pre><code>&lt;script&gt;
+  window.ngVideoConfig = { REFRESH: 100, VOLUME_STEPS: 0.2 };
+&lt;/script&gt;
+&lt;script src="ng-video-bundle.js"&gt;&lt;/script&gt;</code></pre>
 
         <h3>Components</h3>
         <pre><code>&lt;ng-video&gt;        &mdash; Container: hosts &lt;video&gt; element, manages playback
@@ -162,6 +149,15 @@ ngOnInit() {
             GitHub.com/Wildhoney/ngVideo
         </a>
     </p>
+
+    <script src="../dist/ng-video-elements/ng-video-bundle.js"></script>
+    <script>
+        customElements.whenDefined('ng-video').then(function () {
+            var player = document.getElementById('player');
+            player.addSource('mp4', 'http://www.w3schools.com/html/mov_bbb.mp4');
+            player.addSource('mp4', 'http://www.w3schools.com/html/movie.mp4');
+        });
+    </script>
 
 </body>
 </html>

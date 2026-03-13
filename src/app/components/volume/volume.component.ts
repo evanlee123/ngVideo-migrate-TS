@@ -16,6 +16,39 @@ import { VideoOptions } from '../../models/video-source.model';
     <span (click)="decreaseVolume()" title="Decrease Volume" class="decrease glyphicon glyphicon-minus"></span>
     <span (click)="increaseVolume()" title="Increase Volume" class="increase glyphicon glyphicon-plus"></span>
   `,
+  styles: [`
+    :host {
+      position: absolute;
+      top: 145px;
+      right: 25px;
+      width: 48px;
+    }
+    div.scale {
+      background-color: rgba(0, 0, 0, .15);
+      width: 48px;
+      height: 5px;
+      position: relative;
+    }
+    div.scale div.bar {
+      background-color: rgba(255, 255, 255, .75);
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 5px;
+      width: 50%;
+      transition: width .25s;
+    }
+    span {
+      color: rgba(0, 0, 0, .25);
+      font-size: 15px;
+      pointer-events: all;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    span.increase {
+      float: right;
+    }
+  `],
 })
 export class VolumeComponent implements OnInit, OnDestroy {
   volume = 1;

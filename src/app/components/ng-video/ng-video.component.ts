@@ -14,11 +14,73 @@ import { VideoOptions, VideoSource } from '../../models/video-source.model';
   template: `
     <video #videoPlayer (click)="onScreenClick()"></video>
     <ng-content></ng-content>
+    <section class="full-screen">
+      <span title="Full Screen" (click)="toggleFullScreen()" class="glyphicon glyphicon-fullscreen"></span>
+    </section>
+    <span title="Open Playlist"
+          *ngIf="!playlistOpen"
+          (click)="playlistOpen = true"
+          class="open-playlist glyphicon glyphicon-facetime-video">
+    </span>
   `,
+  styles: [`
+    :host {
+      display: block;
+      text-align: left;
+      padding: 5px;
+      position: relative;
+      background-color: white;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, .25);
+      border: 1px solid lightgray;
+    }
+    :host section.loading {
+      position: absolute;
+      top: 39px;
+      left: 5px;
+      width: 538px;
+      height: 260px;
+      color: white;
+      text-shadow: 1px 1px 0 rgba(0, 0, 0, .25);
+      font-size: 12px;
+      pointer-events: all;
+      z-index: 201;
+      padding: 13px 0 0 40px;
+      background-color: rgba(0, 0, 0, .25);
+    }
+    video {
+      background-color: rgba(0, 0, 0, .25);
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+    }
+    section.full-screen {
+      position: absolute;
+      top: 40px;
+      left: 6px;
+      cursor: pointer;
+      padding: 10px;
+      color: white;
+    }
+    span.open-playlist {
+      color: white;
+      position: absolute;
+      cursor: pointer;
+      top: 5px;
+      left: 5px;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      text-align: center;
+      font-size: 18px;
+    }
+  `],
 })
 export class NgVideoComponent implements AfterViewInit, OnDestroy {
   @ViewChild('videoPlayer', { static: true }) videoPlayerRef!: ElementRef<HTMLVideoElement>;
 
+  playlistOpen = false;
   private currentVideo: VideoSource | VideoSource[] | null = null;
   private readonly destroy$ = new Subject<void>();
 
@@ -42,6 +104,11 @@ export class NgVideoComponent implements AfterViewInit, OnDestroy {
     this.attachEvents(player);
     this.events.attachEvents$.next(player);
 
+    // Expose public methods on the native DOM element for Web Components consumers
+    const nativeEl = this.elementRef.nativeElement;
+    nativeEl.addSource = (type: string, src: string) => this.addSource(type, src);
+    nativeEl.open = (video: VideoSource | VideoSource[]) => this.open(video);
+
     // Open first video if playlist already has items
     const items = this.playlist.getAll();
     if (items.length > 0) {
@@ -61,6 +128,18 @@ export class NgVideoComponent implements AfterViewInit, OnDestroy {
     this.videoService.forceVideo$.pipe(takeUntil(this.destroy$)).subscribe((video) => {
       this.open(video);
     });
+  }
+
+  toggleFullScreen(): void {
+    if (document.fullscreenElement) {
+      this.playerContext.closeFullScreen();
+    } else {
+      this.playerContext.openFullScreen();
+    }
+  }
+
+  addSource(type: string, src: string): void {
+    this.videoService.addSource(type, src);
   }
 
   ngOnDestroy(): void {

@@ -10,6 +10,22 @@ import { VideoOptions } from '../../models/video-source.model';
 @Component({
   selector: 'vi-buffer',
   template: '<canvas #bufferCanvas></canvas>',
+  styles: [`
+    :host {
+      position: absolute;
+      width: calc(100% - 60px);
+      left: 30px;
+      bottom: 30px;
+      background-color: rgba(255, 255, 255, .5);
+      height: 1px;
+    }
+    canvas {
+      margin: 0;
+      position: absolute;
+      width: 100%;
+      top: 0;
+    }
+  `],
 })
 export class BufferComponent implements OnInit, OnDestroy {
   @ViewChild('bufferCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;

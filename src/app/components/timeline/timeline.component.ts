@@ -10,6 +10,44 @@ import { VideoOptions } from '../../models/video-source.model';
 @Component({
   selector: 'vi-timeline',
   template: '<input #rangeInput type="range" value="0" (mousedown)="onMouseDown()" (mouseup)="onMouseUp()" (change)="onChange()" />',
+  styles: [`
+    :host {
+      position: absolute;
+      width: calc(100% - 60px);
+      left: 30px;
+      bottom: 32px;
+    }
+    input {
+      width: 100%;
+      pointer-events: all;
+      appearance: none;
+      -o-appearance: none;
+      -moz-appearance: none;
+      -webkit-appearance: none;
+      background-color: transparent;
+      outline: none;
+      height: 12px;
+      border-bottom: 3px solid rgba(0, 0, 0, .25);
+    }
+    input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      background-color: white;
+      margin-bottom: 20px;
+      border-radius: 2px;
+      outline: none;
+      height: 15px;
+      width: 45px;
+    }
+    input::-moz-range-thumb {
+      -webkit-appearance: none;
+      background-color: white;
+      margin-bottom: 20px;
+      border-radius: 2px;
+      outline: none;
+      height: 15px;
+      width: 45px;
+    }
+  `],
 })
 export class TimelineComponent implements OnInit, OnDestroy {
   @ViewChild('rangeInput', { static: true }) inputRef!: ElementRef<HTMLInputElement>;

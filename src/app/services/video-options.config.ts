@@ -17,5 +17,5 @@ export const DEFAULT_VIDEO_OPTIONS: VideoOptions = {
 
 export const VIDEO_OPTIONS = new InjectionToken<VideoOptions>('VideoOptions', {
   providedIn: 'root',
-  factory: () => ({ ...DEFAULT_VIDEO_OPTIONS }),
+  factory: () => ({ ...DEFAULT_VIDEO_OPTIONS, ...((window as any).ngVideoConfig || {}) }),
 });
