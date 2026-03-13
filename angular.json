@@ -37,25 +37,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [
-              "node_modules/angular/angular.js",
-              "components/Service.js",
-              "components/Bootstrap.js",
-              "components/Buffer.js",
-              "components/Controls.js",
-              "components/FullScreen.js",
-              "components/PlaybackRate.js",
-              "components/Playlist.js",
-              "components/Seekable.js",
-              "components/Screen.js",
-              "components/Feedback.js",
-              "components/Meta.js",
-              "components/Messages.js",
-              "components/Timeline.js",
-              "components/Volume.js",
-              "example/js/Default.js",
-              "example/js/controllers/VideoController.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {

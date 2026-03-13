@@ -6,3 +6,5 @@
 !/dist/custom/.gitkeep
 /.angular
 /dist/ng-video-angular
+/playwright-report
+/test-results
