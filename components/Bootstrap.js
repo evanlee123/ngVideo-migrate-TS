@@ -13,10 +13,12 @@
      * @param video {Object}
      * @param ngVideoPlaylist {Array}
      * @param ngVideoOptions {Object}
+     * @param videoPlayerContext {Object} - Angular service (downgraded)
+     * @param videoEventService {Object} - Angular service (downgraded)
      */
-    $angular.module('ngVideo').directive('ngVideo', ['$rootScope', 'video', 'ngVideoPlaylist', 'ngVideoOptions',
+    $angular.module('ngVideo').directive('ngVideo', ['$rootScope', 'video', 'ngVideoPlaylist', 'ngVideoOptions', 'videoPlayerContext', 'videoEventService',
 
-    function ngVideoDirective($rootScope, video, ngVideoPlaylist, ngVideoOptions) {
+    function ngVideoDirective($rootScope, video, ngVideoPlaylist, ngVideoOptions, videoPlayerContext, videoEventService) {
 
         return {
 
@@ -111,6 +113,7 @@
 
                             $scope.loading = false;
                             $rootScope.$broadcast('ng-video/reset');
+                            videoEventService.videoReset$.next();
 
                             if ($scope.playing || $scope.player.autoplay) {
 
@@ -351,10 +354,26 @@
                 // We have the video player so store its instance.
                 scope.player = player[0];
 
+                // Sync state to Angular services
+                videoPlayerContext.player = scope.player;
+                videoPlayerContext.container = scope.container;
+
+                // Expose the playlist for projected content (vi-playlist is now Angular ng-content wrapper)
+                scope.playlistItems = ngVideoPlaylist;
+
+                // Keep playing/loading in sync with Angular service
+                scope.$watch('playing', function syncPlaying(val) {
+                    videoPlayerContext.playing$.next(!!val);
+                });
+                scope.$watch('loading', function syncLoading(val) {
+                    videoPlayerContext.loading$.next(!!val);
+                });
+
                 // Set-up the events to be fired, and the event for notifying the message module
                 // to set-up its own events.
                 scope.attachEvents(player);
                 $rootScope.$broadcast('ng-video/attach-events', player);
+                videoEventService.attachEvents$.next(player[0]);
 
                 if (scope.video) {
 

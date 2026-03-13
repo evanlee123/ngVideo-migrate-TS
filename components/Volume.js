@@ -9,69 +9,6 @@
     var module = $angular.module('ngVideo');
 
     /**
-     * @directive viVolume
-     * @type {Function}
-     * @param ngVideoOptions {Object}
-     */
-    module.directive('viVolume', ['ngVideoOptions', function ngVolumeDirective(ngVideoOptions) {
-
-        return {
-
-            /**
-             * @property restrict
-             * @type {String}
-             */
-            restrict: ngVideoOptions.RESTRICT,
-
-            /**
-             * @property scope
-             * @type {Boolean}
-             */
-            scope: true,
-
-            /**
-             * @property controller
-             * @type {Array}
-             * @param $scope {Object}
-             */
-            controller: ['$rootScope', '$scope', function controller($rootScope, $scope) {
-
-                /**
-                 * @method setVolume
-                 * @param volume {Number}
-                 * @return {void}
-                 */
-                $scope.setVolume = function setVolume(volume) {
-
-                    if ($scope.player.muted && volume > 0) {
-
-                        // Determine if the user is un-muting the player, which can be set
-                        // as the `muted` attribute on the player itself.
-                        $scope.player.muted = false;
-
-                    }
-
-                    if (volume < ngVideoOptions.VOLUME_MINIMUM) {
-                        volume = ngVideoOptions.VOLUME_MINIMUM;
-                    }
-
-                    if (volume > ngVideoOptions.VOLUME_MAXIMUM) {
-                        volume = ngVideoOptions.VOLUME_MAXIMUM;
-                    }
-
-                    // Set the constrained volume parameter.
-                    $scope.player.volume = +(volume).toFixed(2);
-                    $rootScope.$broadcast('ng-video/volume', $scope.player.volume);
-
-                };
-
-            }]
-
-        }
-
-    }]);
-
-    /**
      * @method createVolumeDirective
      * @param name {String}
      * @param clickFn {Function}
@@ -89,9 +26,9 @@
          * @directive viVolumeItem
          * @type {Function}
          */
-        module.directive('viVolume' + directiveLabel, ['ngVideoOptions',
+        module.directive('viVolume' + directiveLabel, ['ngVideoOptions', 'videoPlayerContext', 'videoEventService',
 
-        function viVolumeItem(ngVideoOptions) {
+        function viVolumeItem(ngVideoOptions, videoPlayerContext, videoEventService) {
 
             return {
 
@@ -111,8 +48,11 @@
 
                     element.bind('click', function onClick() {
 
+                        var player = videoPlayerContext.player;
+                        var currentVolume = player ? player.volume : 0;
+
                         // Invoke the `clickFn` callback when the element has been clicked.
-                        clickFn.call(this, scope, scope.player.volume, ngVideoOptions.VOLUME_STEPS);
+                        clickFn.call(this, videoPlayerContext, videoEventService, currentVolume, ngVideoOptions.VOLUME_STEPS);
                         scope.$apply();
 
                     });
@@ -128,41 +68,37 @@
     /**
      * @directive viVolumeDecrease
      * @type {Function}
-     * @param scope {Object}
-     * @param currentVolume {Number}
-     * @param volumeSteps {Number}
      */
-    createVolumeDirective('decrease', function onDecreaseClick(scope, currentVolume, volumeSteps) {
-        scope.setVolume(currentVolume - volumeSteps);
+    createVolumeDirective('decrease', function onDecreaseClick(ctx, events, currentVolume, volumeSteps) {
+        ctx.setVolume(currentVolume - volumeSteps);
+        events.volumeChanged$.next(ctx.player ? ctx.player.volume : 0);
     });
 
     /**
      * @directive viVolumeIncrease
      * @type {Function}
-     * @param scope {Object}
-     * @param currentVolume {Number}
-     * @param volumeSteps {Number}
      */
-    createVolumeDirective('increase', function onIncreaseClick(scope, currentVolume, volumeSteps) {
-        scope.setVolume(currentVolume + volumeSteps);
+    createVolumeDirective('increase', function onIncreaseClick(ctx, events, currentVolume, volumeSteps) {
+        ctx.setVolume(currentVolume + volumeSteps);
+        events.volumeChanged$.next(ctx.player ? ctx.player.volume : 0);
     });
 
     /**
      * @directive viVolumeMute
      * @type {Function}
-     * @param scope {Object}
      */
-    createVolumeDirective('mute', function onMuteClick(scope) {
-        scope.setVolume(0);
+    createVolumeDirective('mute', function onMuteClick(ctx, events) {
+        ctx.setVolume(0);
+        events.volumeChanged$.next(0);
     });
 
     /**
      * @directive viVolumeLoudest
      * @type {Function}
-     * @param scope {Object}
      */
-    createVolumeDirective('loudest', function onLoudestClick(scope) {
-        scope.setVolume(1);
+    createVolumeDirective('loudest', function onLoudestClick(ctx, events) {
+        ctx.setVolume(1);
+        events.volumeChanged$.next(ctx.player ? ctx.player.volume : 1);
     });
 
 })(window.angular);

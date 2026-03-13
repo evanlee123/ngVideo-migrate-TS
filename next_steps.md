@@ -2,79 +2,56 @@
 
 ## Current Status
 
-- **Phase 0 (Complete):** Angular 17 project scaffolded alongside AngularJS. Hybrid bootstrap configured with `UpgradeModule`. Fixed critical bug where `bootstrap: [AppComponent]` prevented `ngDoBootstrap()` from running — AngularJS now compiles fully.
-- **Phase 5 - Playwright (Complete):** 23 e2e regression tests covering all UI components. Uses system Chrome (`channel: 'chrome'`).
-- **Phase 1 (Complete):** All core services and constants migrated to Angular TypeScript. 58 unit tests pass.
+- **Phase 0 (Complete):** Angular 17 project scaffolded alongside AngularJS. Hybrid bootstrap with `UpgradeModule`.
+- **Phase 5 (Complete):** 23 Playwright e2e regression tests. Uses system Chrome (`channel: 'chrome'`).
+- **Phase 1 (Complete):** Core services and constants migrated to Angular TypeScript. 58 unit tests.
+- **Phase 2 (Complete):** Leaf directives migrated. 84 unit tests, 23 e2e tests pass.
+- **Phase 3 (Complete):** All container directives migrated (3a–3e). 121 unit tests, 23 e2e tests pass.
 
-### Phase 1 Files Created
+### Phase 3 Files Created/Modified
 
-| File | Purpose |
-|------|---------|
-| `src/app/models/video-source.model.ts` | `VideoSource`, `VideoOptions`, `VideoMessage` interfaces, `MESSAGE_TYPE` |
-| `src/app/services/video-options.config.ts` | `InjectionToken<VideoOptions>` with defaults matching `components/Service.js:20-32` |
-| `src/app/services/video-messages.config.ts` | `InjectionToken` with all 21 message types matching `components/Messages.js` |
-| `src/app/services/video-event.service.ts` | RxJS Subject-based event bus (6 channels) replacing `$rootScope.$broadcast` |
-| `src/app/services/playlist.service.ts` | `BehaviorSubject` playlist management replacing `ngVideoPlaylist` value |
-| `src/app/services/video.service.ts` | `@Injectable()` replacing AngularJS `video` service |
-| `src/app/services/video-player-context.ts` | Shared state container replacing scope inheritance |
+| File | What changed |
+|------|-------------|
+| `src/app/components/controls/controls.component.ts` | NEW — `<ng-content>` wrapper replacing `viControls` directive |
+| `src/app/components/volume/volume.component.ts` | NEW — `<ng-content>` wrapper replacing `viVolume` directive |
+| `src/app/components/messages/messages.component.ts` | NEW — Self-contained component replacing `viMessages` directive |
+| `src/app/components/feedback/feedback.component.ts` | NEW — Full Angular component with polling, replacing `viFeedback` directive |
+| `src/app/services/video-player-context.ts` | Added `setVolume()` method with clamping and un-mute logic |
+| `components/Controls.js` | Removed `viControls` directive; leaf directives (`viControlsPlay/Pause`) inject `videoPlayerContext` directly |
+| `components/Volume.js` | Removed `viVolume` directive; leaf directives inject `videoPlayerContext` and `videoEventService` directly, call `setVolume()` |
+| `src/app/ajs-downgrade.ts` | Added `downgradeComponent` for `ControlsComponent`, `VolumeComponent`, `MessagesComponent`, `FeedbackComponent` |
+| `src/app/app.module.ts` | Declares all four new components |
+| `angular.json` | Removed `Feedback.js`, `Messages.js` from scripts array |
+| `src/index.html` | `vi-controls`, `vi-volume`, `vi-feedback`, `vi-messages` now use Angular components |
+| `src/app/testing/mocks.ts` | Added `setVolume` to mock `VideoPlayerContext` |
+| `e2e/video-player.spec.ts` | Updated selectors: `.controls`, `.volume`, `.feedback`, `.playlist`, `vi-messages` |
+| `src/app/components/playlist/playlist.component.ts` | NEW — `<ng-content>` wrapper replacing `viPlaylist` directive |
+| `components/Playlist.js` | Removed `viPlaylist` directive; `viPlaylistVideo` remains as AngularJS directive |
+| `components/Bootstrap.js` | Added `scope.playlistItems = ngVideoPlaylist` for projected content access |
 
 ---
 
 ## Immediate Next Steps
 
-### 1. Phase 2: Migrate Leaf Directives
-
-Migrate simple directives with no children. Each gets:
-- Angular component/directive in `src/app/components/<name>/`
-- `downgradeComponent` registration for AngularJS template compatibility
-- Unit test file
-
-**Important architectural note:** Attribute directives (`viScreen`, `viControlsPlay`, etc.) can't use `downgradeComponent` (which only works with components). Use Option A: keep as AngularJS thin wrappers that delegate to Angular services during hybrid phase.
-
-**Migration order (simplest first):**
-
-| Order | Directive(s) | Lines | Approach |
-|-------|-------------|-------|----------|
-| 2a | `viScreen` | 49 | Refactor to delegate to `VideoPlayerContext.toggleState()` |
-| 2b | `viControlsPlay`, `viControlsPause` | ~40 | Delegate to `VideoPlayerContext.play()`/`pause()` |
-| 2c | `viFullScreenOpen/Close/Toggle` | 121 | Delegate to `VideoPlayerContext.openFullScreen()`/`closeFullScreen()` |
-| 2d | `viVolumeDecrease/Increase/Mute/Loudest` | ~80 | Delegate to `VideoPlayerContext`, emit via `VideoEventService.volumeChanged$` |
-| 2e | `viPlaybackRate` + variants | 120 | Delegate to context, emit `feedbackRefresh$` |
-| 2f | `viSeekable` + variants | 89 | Delegate to context, emit `feedbackRefresh$` |
-| 2g | `viBuffer` | 79 | Angular component with `<canvas>`, subscribe to `feedbackRefresh$` |
-| 2h | `viTimeline` | 111 | Angular component with `<input type="range">`, subscribe to `videoReset$` |
-| 2i | `viMeta` | 95 | Angular component, creates own `<video>` for metadata |
-
-### 2. Phase 3: Migrate Container Directives
-
-| Order | Directive | Key challenge |
-|-------|----------|---------------|
-| 3a | `viControls` | Content projection via `<ng-content>` |
-| 3b | `viVolume` | Manages volume state, broadcasts events |
-| 3c | `viFeedback` | Most complex child — polling with RxJS `interval`, 4 event subscriptions |
-| 3d | `viMessages` | Subscribes to `attachEvents$`, binds native video events |
-| 3e | `viPlaylist` + `viPlaylistVideo` | Uses `PlaylistService` observable, `*ngFor` replaces `ng-repeat` |
-
-### 3. Phase 4: Migrate Main Directive & Remove AngularJS
+### Phase 4: Migrate Main Directive & Remove AngularJS
 
 #### 4a. `ngVideo` → `NgVideoComponent`
-The parent container (398 lines). Manages video element lifecycle, playlist navigation, auto-play.
+The parent container (~400 lines). Most logic already exists in `VideoPlayerContext` and `VideoEventService`. The component wires up the `<video>` element, handles playlist advancement on `ended`, and manages the `open()` method.
 
 #### 4b. `VideoController` → `AppComponent`
-Convert the example app controller to an Angular component.
+Convert the example app controller to an Angular component. Manages `playlistOpen` state and initial video source loading.
 
 #### 4c. Remove AngularJS entirely
-- Remove `UpgradeModule` and all `downgradeComponent`/`downgradeInjectable` calls
-- Remove event bridge
-- Remove AngularJS script includes from `angular.json`
+- Delete `src/app/ajs-downgrade.ts` and all dual-emit `$rootScope.$broadcast` calls
+- Remove `UpgradeModule` from `AppModule`
+- Remove AngularJS scripts from `angular.json`
 - Remove `angular` package from dependencies
 - Pure Angular bootstrap in `main.ts`
 
-### 4. Phase 6: Cleanup
-
+### Phase 6: Cleanup
 - Delete `Gruntfile.js`, `bower.json`, `.bowerrc`, `.jshintrc`
 - Delete `KarmaUnit.js` and `tests/Spec.js`
-- Delete `components/*.js` (all migrated to `src/app/`)
+- Delete all remaining `components/*.js`
 - Update `package.json` scripts
 - Final `ng build --configuration production`
 
@@ -82,6 +59,6 @@ Convert the example app controller to an Angular component.
 
 ## Verification After Each Phase
 
-1. Run `npx ng test --no-watch --browsers=ChromeHeadless` — all unit tests pass
-2. Run `npx playwright test` — all 23 e2e tests pass
-3. Manual smoke test: open `http://localhost:4200`, play a video, use controls
+1. `npx ng test --no-watch --browsers=ChromeHeadless` — all unit tests pass
+2. `npx playwright test` — all 23 e2e tests pass
+3. Manual smoke test: `http://localhost:4200`, play a video, use controls

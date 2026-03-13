@@ -6,10 +6,11 @@
      * @directive viScreen
      * @type {Function}
      * @param ngVideoOptions {Object}
+     * @param videoPlayerContext {Object} - Angular service (downgraded)
      */
-    $angular.module('ngVideo').directive('viScreen', ['ngVideoOptions',
+    $angular.module('ngVideo').directive('viScreen', ['ngVideoOptions', 'videoPlayerContext',
 
-    function ngScreenDirective(ngVideoOptions) {
+    function ngScreenDirective(ngVideoOptions, videoPlayerContext) {
 
         return {
 
@@ -33,8 +34,8 @@
                     // state of the current video, if there is one.
                     element.bind('click', function() {
 
-                        if (!scope.loading) {
-                            scope.toggleState();
+                        if (!videoPlayerContext.loading$.value) {
+                            videoPlayerContext.toggleState();
                         }
 
                     });

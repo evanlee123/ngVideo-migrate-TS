@@ -71,6 +71,41 @@ describe('VideoPlayerContext', () => {
     });
   });
 
+  describe('setVolume', () => {
+    let mockPlayer: any;
+
+    beforeEach(() => {
+      mockPlayer = { volume: 1, muted: false };
+      context.player = mockPlayer as HTMLVideoElement;
+    });
+
+    it('should set volume on the player', () => {
+      context.setVolume(0.5);
+      expect(mockPlayer.volume).toBe(0.5);
+    });
+
+    it('should clamp volume to minimum', () => {
+      context.setVolume(-0.5);
+      expect(mockPlayer.volume).toBe(0);
+    });
+
+    it('should clamp volume to maximum', () => {
+      context.setVolume(1.5);
+      expect(mockPlayer.volume).toBe(1);
+    });
+
+    it('should unmute player when volume > 0 and player is muted', () => {
+      mockPlayer.muted = true;
+      context.setVolume(0.5);
+      expect(mockPlayer.muted).toBe(false);
+    });
+
+    it('should not throw when player is null', () => {
+      context.player = null;
+      expect(() => context.setVolume(0.5)).not.toThrow();
+    });
+  });
+
   describe('fullscreen', () => {
     it('should not throw openFullScreen when container is null', () => {
       expect(() => context.openFullScreen()).not.toThrow();

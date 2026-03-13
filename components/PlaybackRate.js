@@ -19,10 +19,12 @@
         /**
          * @directive viPlaybackRateItem
          * @type {Function}
+         * @param videoPlayerContext {Object} - Angular service (downgraded)
+         * @param videoEventService {Object} - Angular service (downgraded)
          */
-        $angular.module('ngVideo').directive(directiveName, ['$rootScope', 'ngVideoOptions',
+        $angular.module('ngVideo').directive(directiveName, ['$rootScope', 'ngVideoOptions', 'videoPlayerContext', 'videoEventService',
 
-        function viPlaybackRateItem($rootScope, ngVideoOptions) {
+        function viPlaybackRateItem($rootScope, ngVideoOptions, videoPlayerContext, videoEventService) {
 
             return {
 
@@ -48,23 +50,27 @@
                      */
                     scope.setPlaybackRate = function setPlaybackRate(rate) {
 
+                        var player = videoPlayerContext.player;
+
                         // Update the current play rate and the default play rate for when another
                         // video is played.
-                        scope.player.playbackRate        = rate;
-                        scope.player.defaultPlaybackRate = rate;
+                        player.playbackRate        = rate;
+                        player.defaultPlaybackRate = rate;
 
-                        // Force the refreshing of the statistics.
+                        // Dual-emit: force refreshing of statistics
                         $rootScope.$broadcast('ng-video/feedback/refresh');
+                        videoEventService.feedbackRefresh$.next();
 
                     };
 
                     element.bind('click', function onClick() {
 
                         // Invoke the `clickFn` callback when the element has been clicked.
-                        clickFn.call(this, scope, +attributes[directiveName], +scope.player.playbackRate);
+                        clickFn.call(this, scope, +attributes[directiveName], +videoPlayerContext.player.playbackRate);
 
-                        // Force the timeline directive to update.
+                        // Dual-emit: force the timeline directive to update
                         $rootScope.$broadcast('ng-video/feedback/refresh');
+                        videoEventService.feedbackRefresh$.next();
                         scope.$apply();
 
                     });
@@ -80,8 +86,6 @@
     /**
      * @directive viPlaybackRate
      * @type {Function}
-     * @param scope {Object}
-     * @param directiveValue {Number}
      */
     createPlaybackRateDirective('', function onPlaybackRateClick(scope, directiveValue) {
         scope.setPlaybackRate(directiveValue);
@@ -90,7 +94,6 @@
     /**
      * @directive viPlaybackRateNormalise
      * @type {Function}
-     * @param scope {Object}
      */
     createPlaybackRateDirective('normalise', function onPlaybackRateNormaliseClick(scope) {
         scope.setPlaybackRate(1);
@@ -99,9 +102,6 @@
     /**
      * @directive viPlaybackRateIncrement
      * @type {Function}
-     * @param scope {Object}
-     * @param directiveValue {Number}
-     * @param currentRate {Number}
      */
     createPlaybackRateDirective('increment', function onPlaybackRateIncrementClick(scope, directiveValue, currentRate) {
         scope.setPlaybackRate(currentRate + directiveValue);
@@ -110,9 +110,6 @@
     /**
      * @directive viPlaybackRateDecrement
      * @type {Function}
-     * @param scope {Object}
-     * @param directiveValue {Number}
-     * @param currentRate {Number}
      */
     createPlaybackRateDirective('decrement', function onPlaybackRateDecrementClick(scope, directiveValue, currentRate) {
         scope.setPlaybackRate(currentRate - directiveValue);

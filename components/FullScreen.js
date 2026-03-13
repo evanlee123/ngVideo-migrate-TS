@@ -16,12 +16,13 @@
         var directiveLabel = name.charAt(0).toUpperCase() + name.slice(1);
 
         /**
-         * @directive viVolumeItem
+         * @directive viFullScreenItem
          * @type {Function}
+         * @param videoPlayerContext {Object} - Angular service (downgraded)
          */
-        $angular.module('ngVideo').directive('viFullScreen' + directiveLabel, ['$window', 'ngVideoOptions',
+        $angular.module('ngVideo').directive('viFullScreen' + directiveLabel, ['$window', 'ngVideoOptions', 'videoPlayerContext',
 
-        function viVolumeItem($window, ngVideoOptions) {
+        function viFullScreenItem($window, ngVideoOptions, videoPlayerContext) {
 
             return {
 
@@ -42,7 +43,7 @@
                     element.bind('click', function onClick() {
 
                         // Invoke the `clickFn` callback when the element has been clicked.
-                        clickFn.call(this, scope, $window.document);
+                        clickFn.call(this, scope, $window.document, videoPlayerContext);
                         scope.$apply();
 
                     });
@@ -58,27 +59,24 @@
     /**
      * @directive viFullScreenOpen
      * @type {Function}
-     * @param scope {Object}
      */
-    createFullScreenDirective('open', function onFullScreenOpenClick(scope) {
-        scope.openFullScreen();
+    createFullScreenDirective('open', function onFullScreenOpenClick(scope, document, videoPlayerContext) {
+        videoPlayerContext.openFullScreen();
     });
 
     /**
      * @directive viFullScreenClose
      * @type {Function}
-     * @param scope {Object}
      */
-    createFullScreenDirective('close', function onFullScreenCloseClick(scope) {
-        scope.closeFullScreen();
+    createFullScreenDirective('close', function onFullScreenCloseClick(scope, document, videoPlayerContext) {
+        videoPlayerContext.closeFullScreen();
     });
 
     /**
      * @directive viFullScreenToggle
      * @type {Function}
-     * @param scope {Object}
      */
-    createFullScreenDirective('toggle', function onFullScreenToggleClick(scope, document) {
+    createFullScreenDirective('toggle', function onFullScreenToggleClick(scope, document, videoPlayerContext) {
 
         /**
          * @method inFullScreen
@@ -109,13 +107,13 @@
 
             // Determine if we're currently in full-screen mode, and then deduce which method
             // to call based on the result.
-            scope.openFullScreen();
+            videoPlayerContext.openFullScreen();
             return;
 
         }
 
         // Close the full screen mode if we're still full screen.
-        scope.closeFullScreen();
+        videoPlayerContext.closeFullScreen();
 
     });
 

@@ -95,9 +95,16 @@ When AngularJS code calls into Angular services (or vice versa), change detectio
 - Event handlers that update Angular state from AngularJS callbacks
 - RxJS subscriptions that modify AngularJS scope properties
 
-### 13. The event bridge is temporary — track it for deletion
+### 13. Dual-emit beats a separate event bridge
 
-The `event-bridge.ts` file syncs `$rootScope.$broadcast` with RxJS Subjects. It's easy to forget about. Mark it clearly as temporary and add a TODO comment with the deletion condition: "Delete this file after Phase 4c (remove AngularJS)."
+The original plan called for a dedicated `event-bridge.ts` file to bidirectionally sync `$rootScope.$broadcast` ↔ RxJS Subjects. In practice, **dual-emitting at the call site** is simpler and avoids infinite-loop risks:
+
+```javascript
+$rootScope.$broadcast('ng-video/volume', player.volume);
+videoEventService.volumeChanged$.next(player.volume);
+```
+
+Each refactored AngularJS directive emits to both systems inline. No separate file to maintain, no loop guards needed, and the dual-emit is easy to grep for and delete in Phase 4c. The `ajs-downgrade.ts` file that registers `downgradeInjectable`/`downgradeComponent` is the only bridge file — mark it with a TODO for deletion.
 
 ### 14. Assets (media, images) need explicit mapping in angular.json
 
@@ -116,3 +123,96 @@ When the `@NgModule` decorator has `bootstrap: [AppComponent]`, Angular handles 
 ### 16. Playwright `channel: 'chrome'` avoids browser compatibility issues
 
 The bundled Chromium from Playwright 1.40 (chromium-1091) crashes on macOS Sequoia with "Target page, context or browser has been closed". Using `channel: 'chrome'` in the Playwright config to use the system-installed Chrome avoids this entirely and removes the need to download a separate browser binary.
+
+## Phase 2 Lessons
+
+### 17. Thin wrappers are the right approach for attribute directives
+
+Attribute directives (e.g., `<video vi-screen>`, `<span vi-controls-play>`) can't be converted to Angular components via `downgradeComponent` because downgraded components are always **element** directives. The hybrid-period solution is to keep the AngularJS directive file but refactor the logic body to inject and delegate to Angular services (`videoPlayerContext`, `videoEventService`). This means:
+
+- The AngularJS directive remains the "shell" (handles DOM binding, `element.bind('click', ...)`)
+- The Angular service is the "brain" (holds state, executes logic)
+- When the parent container is migrated (Phase 3–4), the shell can be deleted and replaced with Angular event bindings in the component template
+
+### 18. Self-contained polling works better than cross-framework scope watchers
+
+The original Buffer and Timeline directives watch `scope.lastUpdate` (set by Feedback's `$interval` polling). When these become Angular components, they can't `$watch` an AngularJS scope property. Rather than building a complex bridge, each Angular component uses its own `interval(REFRESH)` merged with the relevant RxJS event stream:
+
+```typescript
+merge(interval(this.options.REFRESH), this.events.feedbackRefresh$)
+  .pipe(takeUntil(this.destroy$))
+  .subscribe(() => this.drawBuffer());
+```
+
+This decouples the component from Feedback's polling lifecycle. The slight overhead of independent polling is negligible at 50ms intervals, and it simplifies the architecture.
+
+### 19. Remove AngularJS scripts from `angular.json` when replacing with Angular components
+
+When an AngularJS directive is fully replaced by a downgraded Angular component with the same directive name (e.g., `viBuffer`), the old `.js` file **must** be removed from the `angular.json` `scripts` array. Otherwise AngularJS registers two directives with the same name, causing double compilation and unpredictable behavior.
+
+### 20. `downgradeComponent` element directives need HTML changes
+
+Downgraded Angular components register as **element** directives in AngularJS. If the original used an attribute (`<section vi-buffer>`), the HTML must change to an element (`<vi-buffer>`). To preserve CSS selectors and e2e tests that use parent class selectors (e.g., `section.buffer canvas`), wrap the new element in the original container:
+
+```html
+<!-- Before -->
+<section vi-buffer class="buffer"></section>
+
+<!-- After -->
+<section class="buffer"><vi-buffer></vi-buffer></section>
+```
+
+CSS descendant selectors like `section.buffer canvas` still match because Angular components don't use Shadow DOM by default.
+
+### 21. `ngModel` + `ng-repeat` blocks downgrade during hybrid period
+
+The `viMeta` directive uses `require: 'ngModel'` and is placed inside `ng-repeat`. Both patterns are deeply AngularJS-specific:
+- `require: 'ngModel'` expects an AngularJS `ngModelController` on the element
+- `ng-repeat` creates AngularJS scopes that downgraded components can't participate in naturally
+
+The Angular `MetaComponent` was created and unit-tested, but left unwired. It will be wired in when its parent (`viPlaylist`) is migrated to Angular (Phase 3e), at which point `ng-repeat` becomes `*ngFor` and `ngModel` becomes `@Input()`.
+
+### 22. AngularJS service injection in directive factories works via closure
+
+When refactoring AngularJS directive factories to inject Angular services, the services are available inside nested controllers and link functions via JavaScript closure — no need to re-inject at the controller level:
+
+```javascript
+module.directive('viVolume', ['ngVideoOptions', 'videoPlayerContext', 'videoEventService',
+function(ngVideoOptions, videoPlayerContext, videoEventService) {
+    return {
+        controller: ['$scope', function($scope) {
+            // videoPlayerContext is accessible here via closure
+            $scope.setVolume = function(volume) {
+                videoPlayerContext.player.volume = volume;
+            };
+        }]
+    };
+}]);
+```
+
+## Phase 3 Lessons
+
+### 23. Container directives with `scope: true` need careful scope chain analysis
+
+When converting a container directive (e.g., `viPlaylist`) from an AngularJS directive with `scope: true` to a downgraded Angular component, the AngularJS child scope disappears. This changes the meaning of `$parent` in projected content:
+
+- **Before:** `$parent` from the directive's child scope points to the parent scope (one level up)
+- **After:** Without the child scope, `$parent` from the same DOM position points one level higher than expected
+
+In ngVideo, `$parent.playlistOpen` worked because the playlist directive created a child scope, and `$parent` resolved to the ngVideo scope. After migration, `$parent` from the ngVideo scope resolves to the VideoController scope instead. The fix is to remove `$parent.` prefixes and use the property name directly, since the scope context is now the expected level.
+
+### 24. `<ng-content>` wrappers are the path of least resistance for containers with mixed children
+
+When a container directive has children that use deeply AngularJS-specific patterns (`require: 'ngModel'`, `ng-repeat`, attribute directives), converting the container to a `<ng-content>` wrapper is far simpler than migrating all children simultaneously. The projected content continues to be compiled by AngularJS, so all AngularJS features work. The container directive's logic moves to Angular services.
+
+### 25. Expose shared state on the nearest AngularJS scope for projected content
+
+When an AngularJS directive's controller sets scope properties that its template reads (e.g., `$scope.videos = ngVideoPlaylist`), and the directive is converted to an Angular `<ng-content>` component, the projected content can no longer access those properties (no AngularJS scope). The fix is to set the property on the nearest surviving AngularJS scope. In ngVideo, `Bootstrap.js` sets `scope.playlistItems = ngVideoPlaylist` so that `ng-repeat="video in playlistItems"` works in the projected playlist content.
+
+### 26. Moving template into Angular component eliminates scope property problems
+
+For the `viFeedback` container (which exposes ~10 scope properties like `currentTime`, `duration`, `volume`), moving the entire template into the Angular component is cleaner than `<ng-content>`. Angular bindings (`{{ currentTime | number:'1.2-2' }}`) replace AngularJS expressions. Child Angular components (`vi-timeline`, `vi-buffer`, `vi-messages`) are used directly in the template. Only children still in AngularJS need `<ng-content>`.
+
+### 27. Volume leaf directives must inject services directly after container migration
+
+When `viVolume` (the container) becomes Angular, its AngularJS child scope disappears. Leaf directives (`viVolumeDecrease`, etc.) that called `scope.setVolume()` via scope inheritance must be updated to inject `videoPlayerContext` directly and call `videoPlayerContext.setVolume()`. Adding `setVolume()` to `VideoPlayerContext` centralizes volume management and removes the scope dependency.

@@ -31,7 +31,7 @@ test.describe('ngVideo Player', () => {
   });
 
   test('controls section is visible', async ({ page }) => {
-    const controls = page.locator('section.controls');
+    const controls = page.locator('.controls');
     await expect(controls).toBeAttached();
   });
 
@@ -43,7 +43,7 @@ test.describe('ngVideo Player', () => {
   });
 
   test('volume bar is rendered', async ({ page }) => {
-    const volumeBar = page.locator('section.volume div.scale div.bar');
+    const volumeBar = page.locator('.volume div.scale div.bar');
     await expect(volumeBar).toBeAttached();
   });
 
@@ -63,7 +63,7 @@ test.describe('ngVideo Player', () => {
   });
 
   test('feedback section is present', async ({ page }) => {
-    const feedback = page.locator('section.feedback');
+    const feedback = page.locator('.feedback');
     await expect(feedback).toBeAttached();
   });
 
@@ -75,9 +75,9 @@ test.describe('ngVideo Player', () => {
   test('generic info section with messages is present', async ({ page }) => {
     const generic = page.locator('section.generic');
     await expect(generic).toBeAttached();
-    // Messages span should contain M followed by a number
-    const messagesSpan = page.locator('[vi-messages]');
-    await expect(messagesSpan).toBeAttached();
+    // Messages component should contain M followed by a number
+    const messagesEl = page.locator('vi-messages');
+    await expect(messagesEl).toBeAttached();
   });
 
   test('playlist button is visible when playlist is closed', async ({ page }) => {
@@ -89,11 +89,11 @@ test.describe('ngVideo Player', () => {
     const openPlaylistBtn = page.locator('span.open-playlist');
     await openPlaylistBtn.click();
 
-    const playlist = page.locator('section.playlist');
+    const playlist = page.locator('.playlist');
     await expect(playlist).toBeVisible();
 
     // Playlist should have a title row and video items
-    const playlistTitle = page.locator('section.playlist li.title');
+    const playlistTitle = page.locator('.playlist li.title');
     await expect(playlistTitle).toBeVisible();
     await expect(playlistTitle).toContainText('Playlist');
   });
@@ -103,14 +103,14 @@ test.describe('ngVideo Player', () => {
     await page.locator('span.open-playlist').click();
 
     // Should have at least 2 video items (from VideoController adding 2 sources)
-    const videoItems = page.locator('section.playlist li[vi-playlist-video]');
+    const videoItems = page.locator('.playlist li[vi-playlist-video]');
     await expect(videoItems).toHaveCount(2);
   });
 
   test('playlist shows video names', async ({ page }) => {
     await page.locator('span.open-playlist').click();
 
-    const videoItems = page.locator('section.playlist li[vi-playlist-video]');
+    const videoItems = page.locator('.playlist li[vi-playlist-video]');
     await expect(videoItems.first()).toContainText('Big Buck Bunny');
     await expect(videoItems.nth(1)).toContainText('The Bear');
   });
@@ -118,14 +118,14 @@ test.describe('ngVideo Player', () => {
   test('playlist can be closed', async ({ page }) => {
     // Open playlist
     await page.locator('span.open-playlist').click();
-    await expect(page.locator('section.playlist')).toBeVisible();
+    await expect(page.locator('.playlist')).toBeVisible();
 
     // Close playlist
-    const closeBtn = page.locator('section.playlist div.close-playlist');
+    const closeBtn = page.locator('.playlist div.close-playlist');
     await closeBtn.click();
 
     // Playlist should be hidden
-    await expect(page.locator('section.playlist')).toBeHidden();
+    await expect(page.locator('.playlist')).toBeHidden();
   });
 
   test('clicking a playlist video changes the source', async ({ page }) => {
@@ -134,7 +134,7 @@ test.describe('ngVideo Player', () => {
 
     // Open playlist and click the second video
     await page.locator('span.open-playlist').click();
-    const secondVideo = page.locator('section.playlist li[vi-playlist-video]').nth(1);
+    const secondVideo = page.locator('.playlist li[vi-playlist-video]').nth(1);
     await secondVideo.click();
 
     // Source should change
@@ -142,8 +142,8 @@ test.describe('ngVideo Player', () => {
   });
 
   test('messages count is displayed', async ({ page }) => {
-    const messagesSpan = page.locator('[vi-messages]');
-    const text = await messagesSpan.textContent();
+    const messagesEl = page.locator('vi-messages');
+    const text = await messagesEl.textContent();
     // Should match pattern like "M5" (M followed by number)
     expect(text).toMatch(/M\d+/);
   });
@@ -161,7 +161,7 @@ test.describe('ngVideo Player', () => {
   test('meta elements exist in playlist items', async ({ page }) => {
     await page.locator('span.open-playlist').click();
 
-    const metaSpans = page.locator('section.playlist span[vi-meta]');
+    const metaSpans = page.locator('.playlist span[vi-meta]');
     const count = await metaSpans.count();
     expect(count).toBeGreaterThanOrEqual(2);
   });
