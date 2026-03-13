@@ -4,3 +4,5 @@
 !/example/js/vendor/.gitkeep
 /dist/custom/*
 !/dist/custom/.gitkeep
+/.angular
+/dist/ng-video-angular
