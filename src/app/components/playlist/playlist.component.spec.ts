@@ -1,49 +1,84 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { PlaylistComponent } from './playlist.component';
-
-@Component({
-  template: `<vi-playlist>
-    <ul>
-      <li class="title">Playlist</li>
-      <li class="video-item">Video 1</li>
-      <li class="video-item">Video 2</li>
-    </ul>
-  </vi-playlist>`,
-})
-class TestHostComponent {}
+import { MetaComponent } from '../meta/meta.component';
+import { VideoSource } from '../../models/video-source.model';
 
 describe('PlaylistComponent', () => {
-  let fixture: ComponentFixture<TestHostComponent>;
+  let component: PlaylistComponent;
+  let fixture: ComponentFixture<PlaylistComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PlaylistComponent, TestHostComponent],
+      declarations: [PlaylistComponent, MetaComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TestHostComponent);
-    fixture.detectChanges();
+    fixture = TestBed.createComponent(PlaylistComponent);
+    component = fixture.componentInstance;
   });
 
   it('should create', () => {
-    const el = fixture.nativeElement.querySelector('vi-playlist');
-    expect(el).toBeTruthy();
+    fixture.detectChanges();
+    expect(component).toBeTruthy();
   });
 
-  it('should project child content via ng-content', () => {
+  it('should render playlist title', () => {
+    fixture.detectChanges();
     const title = fixture.nativeElement.querySelector('.title');
     expect(title).toBeTruthy();
     expect(title.textContent).toContain('Playlist');
   });
 
-  it('should project all list items', () => {
-    const items = fixture.nativeElement.querySelectorAll('.video-item');
+  it('should render video items when videos input is set', () => {
+    component.videos = [
+      { type: 'mp4', src: 'test1.mp4' },
+      { type: 'mp4', src: 'test2.mp4' },
+    ];
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('ul li:not(.title)');
     expect(items.length).toBe(2);
   });
 
-  it('should render ul inside vi-playlist element', () => {
-    const playlist = fixture.nativeElement.querySelector('vi-playlist');
-    const ul = playlist.querySelector('ul');
-    expect(ul).toBeTruthy();
+  it('should use videoNameFn to display video names', () => {
+    component.videos = [{ type: 'mp4', src: 'test1.mp4' }];
+    component.videoNameFn = () => 'Test Video';
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector('ul li:not(.title)');
+    expect(item.textContent).toContain('Test Video');
+  });
+
+  it('should emit selectVideo when a video item is clicked', () => {
+    const video: VideoSource = { type: 'mp4', src: 'test1.mp4' };
+    component.videos = [video];
+    fixture.detectChanges();
+
+    spyOn(component.selectVideo, 'emit');
+    const item = fixture.nativeElement.querySelector('ul li:not(.title)');
+    item.click();
+
+    expect(component.selectVideo.emit).toHaveBeenCalledWith(video);
+  });
+
+  it('should emit close when close button is clicked', () => {
+    fixture.detectChanges();
+
+    spyOn(component.close, 'emit');
+    const closeBtn = fixture.nativeElement.querySelector('.close-playlist');
+    closeBtn.click();
+
+    expect(component.close.emit).toHaveBeenCalled();
+  });
+
+  it('should render vi-meta for each video', () => {
+    component.videos = [
+      { type: 'mp4', src: 'test1.mp4' },
+      { type: 'mp4', src: 'test2.mp4' },
+    ];
+    fixture.detectChanges();
+
+    const metas = fixture.nativeElement.querySelectorAll('vi-meta');
+    expect(metas.length).toBe(2);
   });
 });

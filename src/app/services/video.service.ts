@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject, Observable } from 'rxjs';
 import { VideoSource } from '../models/video-source.model';
 import { PlaylistService } from './playlist.service';
 import { VideoEventService } from './video-event.service';
@@ -6,6 +7,9 @@ import { VideoEventService } from './video-event.service';
 @Injectable({ providedIn: 'root' })
 export class VideoService {
   forceVideo: VideoSource | VideoSource[] | null = null;
+
+  private readonly _forceVideo$ = new Subject<VideoSource | VideoSource[]>();
+  readonly forceVideo$: Observable<VideoSource | VideoSource[]> = this._forceVideo$.asObservable();
 
   constructor(
     private playlist: PlaylistService,
@@ -18,7 +22,7 @@ export class VideoService {
     this.events.videoAdded$.next(model);
 
     if (immediatelyPlay) {
-      this.forceVideo = model;
+      this.setForceVideo(model);
     }
 
     return model;
@@ -30,6 +34,11 @@ export class VideoService {
 
   resetSource(): void {
     this.playlist.clear();
+  }
+
+  setForceVideo(video: VideoSource | VideoSource[]): void {
+    this.forceVideo = video;
+    this._forceVideo$.next(video);
   }
 
   throwException(message: string): never {
@@ -55,7 +64,7 @@ class MultiSource {
     this.events.videoAdded$.next(this.sources);
 
     if (immediatelyPlay) {
-      this.videoService.forceVideo = this.sources;
+      this.videoService.setForceVideo(this.sources);
     }
 
     return this.sources;

@@ -7,52 +7,39 @@
 - **Phase 1 (Complete):** Core services and constants migrated to Angular TypeScript. 58 unit tests.
 - **Phase 2 (Complete):** Leaf directives migrated. 84 unit tests, 23 e2e tests pass.
 - **Phase 3 (Complete):** All container directives migrated (3a–3e). 121 unit tests, 23 e2e tests pass.
+- **Phase 4 (Complete):** Main directive & app migrated, AngularJS removed entirely. 147 unit tests, 23 e2e tests pass.
 
-### Phase 3 Files Created/Modified
+### Phase 4 Files Created/Modified
 
 | File | What changed |
 |------|-------------|
-| `src/app/components/controls/controls.component.ts` | NEW — `<ng-content>` wrapper replacing `viControls` directive |
-| `src/app/components/volume/volume.component.ts` | NEW — `<ng-content>` wrapper replacing `viVolume` directive |
-| `src/app/components/messages/messages.component.ts` | NEW — Self-contained component replacing `viMessages` directive |
-| `src/app/components/feedback/feedback.component.ts` | NEW — Full Angular component with polling, replacing `viFeedback` directive |
-| `src/app/services/video-player-context.ts` | Added `setVolume()` method with clamping and un-mute logic |
-| `components/Controls.js` | Removed `viControls` directive; leaf directives (`viControlsPlay/Pause`) inject `videoPlayerContext` directly |
-| `components/Volume.js` | Removed `viVolume` directive; leaf directives inject `videoPlayerContext` and `videoEventService` directly, call `setVolume()` |
-| `src/app/ajs-downgrade.ts` | Added `downgradeComponent` for `ControlsComponent`, `VolumeComponent`, `MessagesComponent`, `FeedbackComponent` |
-| `src/app/app.module.ts` | Declares all four new components |
-| `angular.json` | Removed `Feedback.js`, `Messages.js` from scripts array |
-| `src/index.html` | `vi-controls`, `vi-volume`, `vi-feedback`, `vi-messages` now use Angular components |
-| `src/app/testing/mocks.ts` | Added `setVolume` to mock `VideoPlayerContext` |
-| `e2e/video-player.spec.ts` | Updated selectors: `.controls`, `.volume`, `.feedback`, `.playlist`, `vi-messages` |
-| `src/app/components/playlist/playlist.component.ts` | NEW — `<ng-content>` wrapper replacing `viPlaylist` directive |
-| `components/Playlist.js` | Removed `viPlaylist` directive; `viPlaylistVideo` remains as AngularJS directive |
-| `components/Bootstrap.js` | Added `scope.playlistItems = ngVideoPlaylist` for projected content access |
+| `src/app/components/ng-video/ng-video.component.ts` | NEW — Main video component replacing `ngVideo` directive |
+| `src/app/app.component.ts` | REWRITTEN — Root app component replacing `VideoController` |
+| `src/app/app.module.ts` | Removed `UpgradeModule`, added `bootstrap: [AppComponent]`, declared `NgVideoComponent` and `MetaComponent` |
+| `src/main.ts` | Removed `ajs-downgrade` import — pure Angular bootstrap |
+| `src/index.html` | Simplified to just `<app-root>` |
+| `src/app/components/controls/controls.component.ts` | Real template with play/pause buttons, injects `VideoPlayerContext` |
+| `src/app/components/volume/volume.component.ts` | Real template with volume bar and decrease/increase buttons |
+| `src/app/components/feedback/feedback.component.ts` | Replaced `<ng-content>` with `<vi-volume>` directly in template |
+| `src/app/components/playlist/playlist.component.ts` | Real template with `*ngFor`, inputs/outputs for videos and events |
+| `src/app/services/video.service.ts` | Added `forceVideo$` Subject and `setForceVideo()` method |
+| `src/styles.css` | Updated CSS selectors: `section.video` → `.video`, `section.controls` → `.controls`, etc. |
+| `angular.json` | Removed all AngularJS scripts from build |
+| `src/app/ajs-downgrade.ts` | DELETED — no longer needed |
+| `e2e/video-player.spec.ts` | Updated selectors for pure Angular DOM structure |
 
 ---
 
 ## Immediate Next Steps
 
-### Phase 4: Migrate Main Directive & Remove AngularJS
-
-#### 4a. `ngVideo` → `NgVideoComponent`
-The parent container (~400 lines). Most logic already exists in `VideoPlayerContext` and `VideoEventService`. The component wires up the `<video>` element, handles playlist advancement on `ended`, and manages the `open()` method.
-
-#### 4b. `VideoController` → `AppComponent`
-Convert the example app controller to an Angular component. Manages `playlistOpen` state and initial video source loading.
-
-#### 4c. Remove AngularJS entirely
-- Delete `src/app/ajs-downgrade.ts` and all dual-emit `$rootScope.$broadcast` calls
-- Remove `UpgradeModule` from `AppModule`
-- Remove AngularJS scripts from `angular.json`
-- Remove `angular` package from dependencies
-- Pure Angular bootstrap in `main.ts`
-
 ### Phase 6: Cleanup
+
 - Delete `Gruntfile.js`, `bower.json`, `.bowerrc`, `.jshintrc`
 - Delete `KarmaUnit.js` and `tests/Spec.js`
-- Delete all remaining `components/*.js`
-- Update `package.json` scripts
+- Delete all `components/*.js` files (no longer loaded or used)
+- Delete `example/js/Default.js` and `example/js/controllers/VideoController.js`
+- Update `package.json` scripts — remove grunt/bower references
+- Remove `angular` (AngularJS 1.x) and `@angular/upgrade` from dependencies
 - Final `ng build --configuration production`
 
 ---

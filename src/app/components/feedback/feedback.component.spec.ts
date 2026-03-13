@@ -8,6 +8,7 @@ import { DEFAULT_VIDEO_OPTIONS } from '../../services/video-options.config';
 import { BufferComponent } from '../buffer/buffer.component';
 import { TimelineComponent } from '../timeline/timeline.component';
 import { MessagesComponent } from '../messages/messages.component';
+import { VolumeComponent } from '../volume/volume.component';
 import { VIDEO_MESSAGES } from '../../services/video-messages.config';
 import { DEFAULT_VIDEO_MESSAGES } from '../../services/video-messages.config';
 import {
@@ -30,7 +31,7 @@ describe('FeedbackComponent', () => {
     // Player starts null; tests that need it assign mockPlayer explicitly
 
     await TestBed.configureTestingModule({
-      declarations: [FeedbackComponent, BufferComponent, TimelineComponent, MessagesComponent],
+      declarations: [FeedbackComponent, BufferComponent, TimelineComponent, MessagesComponent, VolumeComponent],
       providers: [
         { provide: VideoPlayerContext, useValue: mockPlayerContext },
         { provide: VideoEventService, useValue: mockEvents },

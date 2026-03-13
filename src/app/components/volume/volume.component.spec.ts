@@ -1,42 +1,89 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
 import { VolumeComponent } from './volume.component';
-
-@Component({
-  template: `<vi-volume><div class="scale"><div class="bar"></div></div><span class="decrease">-</span><span class="increase">+</span></vi-volume>`,
-})
-class TestHostComponent {}
+import { VideoPlayerContext } from '../../services/video-player-context';
+import { VideoEventService } from '../../services/video-event.service';
+import { VIDEO_OPTIONS } from '../../services/video-options.config';
+import { DEFAULT_VIDEO_OPTIONS } from '../../services/video-options.config';
+import {
+  createMockVideoPlayerContext,
+  createMockVideoEventService,
+  createMockVideoElement,
+} from '../../testing/mocks';
 
 describe('VolumeComponent', () => {
-  let fixture: ComponentFixture<TestHostComponent>;
+  let component: VolumeComponent;
+  let fixture: ComponentFixture<VolumeComponent>;
+  let mockPlayerContext: ReturnType<typeof createMockVideoPlayerContext>;
+  let mockEvents: ReturnType<typeof createMockVideoEventService>;
+  let mockPlayer: ReturnType<typeof createMockVideoElement>;
 
   beforeEach(async () => {
+    mockPlayerContext = createMockVideoPlayerContext();
+    mockEvents = createMockVideoEventService();
+    mockPlayer = createMockVideoElement();
+
     await TestBed.configureTestingModule({
-      declarations: [VolumeComponent, TestHostComponent],
+      declarations: [VolumeComponent],
+      providers: [
+        { provide: VideoPlayerContext, useValue: mockPlayerContext },
+        { provide: VideoEventService, useValue: mockEvents },
+        { provide: VIDEO_OPTIONS, useValue: { ...DEFAULT_VIDEO_OPTIONS } },
+      ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TestHostComponent);
+    fixture = TestBed.createComponent(VolumeComponent);
+    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
   it('should create', () => {
-    const el = fixture.nativeElement.querySelector('vi-volume');
-    expect(el).toBeTruthy();
+    expect(component).toBeTruthy();
   });
 
-  it('should project child content via ng-content', () => {
-    const scale = fixture.nativeElement.querySelector('.scale');
-    const bar = fixture.nativeElement.querySelector('.bar');
-    const decrease = fixture.nativeElement.querySelector('.decrease');
-    const increase = fixture.nativeElement.querySelector('.increase');
-    expect(scale).toBeTruthy();
-    expect(bar).toBeTruthy();
-    expect(decrease).toBeTruthy();
-    expect(increase).toBeTruthy();
+  it('should render volume bar, decrease, and increase buttons', () => {
+    const el = fixture.nativeElement;
+    expect(el.querySelector('.scale')).toBeTruthy();
+    expect(el.querySelector('.bar')).toBeTruthy();
+    expect(el.querySelector('.decrease')).toBeTruthy();
+    expect(el.querySelector('.increase')).toBeTruthy();
   });
 
-  it('should render all projected children inside vi-volume element', () => {
-    const volume = fixture.nativeElement.querySelector('vi-volume');
-    expect(volume.children.length).toBe(3);
+  it('should start with volume 1', () => {
+    expect(component.volume).toBe(1);
+  });
+
+  it('should decrease volume on click', () => {
+    mockPlayerContext.player = mockPlayer as any;
+    mockPlayer.volume = 0.5;
+
+    const decreaseBtn = fixture.nativeElement.querySelector('.decrease');
+    decreaseBtn.click();
+
+    expect(mockPlayerContext.setVolume).toHaveBeenCalledWith(0.4);
+  });
+
+  it('should increase volume on click', () => {
+    mockPlayerContext.player = mockPlayer as any;
+    mockPlayer.volume = 0.5;
+
+    const increaseBtn = fixture.nativeElement.querySelector('.increase');
+    increaseBtn.click();
+
+    expect(mockPlayerContext.setVolume).toHaveBeenCalledWith(0.6);
+  });
+
+  it('should update volume on volumeChanged$', () => {
+    mockPlayerContext.player = mockPlayer as any;
+    mockPlayer.volume = 0.7;
+
+    mockEvents.volumeChanged$.next(0.7);
+    expect(component.volume).toBe(0.7);
+  });
+
+  it('should clean up on destroy', () => {
+    component.ngOnDestroy();
+    expect(() => {
+      mockEvents.volumeChanged$.next(0.5);
+    }).not.toThrow();
   });
 });

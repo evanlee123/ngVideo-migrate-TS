@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('ngVideo Player', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // Wait for AngularJS to bootstrap and compile the ng-video directive
-    await page.waitForSelector('section.video.ng-scope');
+    // Wait for Angular to bootstrap and render the ng-video component with a video element
+    await page.waitForSelector('ng-video video');
   });
 
   test('page loads with correct title', async ({ page }) => {
@@ -12,20 +12,20 @@ test.describe('ngVideo Player', () => {
     await expect(page.locator('.ng-video-container')).toBeVisible();
   });
 
-  test('video element is present with vi-screen attribute', async ({ page }) => {
-    const video = page.locator('video[vi-screen]');
+  test('video element is present', async ({ page }) => {
+    const video = page.locator('ng-video video');
     await expect(video).toBeAttached();
   });
 
   test('video element has a source set', async ({ page }) => {
-    const video = page.locator('video[vi-screen]');
-    // Wait for AngularJS to set the src attribute
+    const video = page.locator('ng-video video');
+    // Wait for Angular to set the src attribute
     await expect(video).toHaveAttribute('src', /.+/);
   });
 
   test('play and pause controls are present', async ({ page }) => {
-    const playBtn = page.locator('[vi-controls-play]');
-    const pauseBtn = page.locator('[vi-controls-pause]');
+    const playBtn = page.locator('.controls .glyphicon-play');
+    const pauseBtn = page.locator('.controls .glyphicon-pause');
     await expect(playBtn).toBeAttached();
     await expect(pauseBtn).toBeAttached();
   });
@@ -36,8 +36,8 @@ test.describe('ngVideo Player', () => {
   });
 
   test('volume controls are present', async ({ page }) => {
-    const decreaseBtn = page.locator('[vi-volume-decrease]');
-    const increaseBtn = page.locator('[vi-volume-increase]');
+    const decreaseBtn = page.locator('.volume .decrease');
+    const increaseBtn = page.locator('.volume .increase');
     await expect(decreaseBtn).toBeAttached();
     await expect(increaseBtn).toBeAttached();
   });
@@ -58,7 +58,7 @@ test.describe('ngVideo Player', () => {
   });
 
   test('fullscreen toggle button is present', async ({ page }) => {
-    const fsToggle = page.locator('[vi-full-screen-toggle]');
+    const fsToggle = page.locator('.full-screen .glyphicon-fullscreen');
     await expect(fsToggle).toBeAttached();
   });
 
@@ -102,15 +102,15 @@ test.describe('ngVideo Player', () => {
     // Open playlist
     await page.locator('span.open-playlist').click();
 
-    // Should have at least 2 video items (from VideoController adding 2 sources)
-    const videoItems = page.locator('.playlist li[vi-playlist-video]');
+    // Should have at least 2 video items (from AppComponent adding 2 sources)
+    const videoItems = page.locator('.playlist li:not(.title)');
     await expect(videoItems).toHaveCount(2);
   });
 
   test('playlist shows video names', async ({ page }) => {
     await page.locator('span.open-playlist').click();
 
-    const videoItems = page.locator('.playlist li[vi-playlist-video]');
+    const videoItems = page.locator('.playlist li:not(.title)');
     await expect(videoItems.first()).toContainText('Big Buck Bunny');
     await expect(videoItems.nth(1)).toContainText('The Bear');
   });
@@ -129,12 +129,12 @@ test.describe('ngVideo Player', () => {
   });
 
   test('clicking a playlist video changes the source', async ({ page }) => {
-    const video = page.locator('video[vi-screen]');
+    const video = page.locator('ng-video video');
     const initialSrc = await video.getAttribute('src');
 
     // Open playlist and click the second video
     await page.locator('span.open-playlist').click();
-    const secondVideo = page.locator('.playlist li[vi-playlist-video]').nth(1);
+    const secondVideo = page.locator('.playlist li:not(.title)').nth(1);
     await secondVideo.click();
 
     // Source should change
@@ -161,8 +161,8 @@ test.describe('ngVideo Player', () => {
   test('meta elements exist in playlist items', async ({ page }) => {
     await page.locator('span.open-playlist').click();
 
-    const metaSpans = page.locator('.playlist span[vi-meta]');
-    const count = await metaSpans.count();
+    const metaElements = page.locator('.playlist vi-meta');
+    const count = await metaElements.count();
     expect(count).toBeGreaterThanOrEqual(2);
   });
 

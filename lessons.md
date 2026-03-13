@@ -216,3 +216,37 @@ For the `viFeedback` container (which exposes ~10 scope properties like `current
 ### 27. Volume leaf directives must inject services directly after container migration
 
 When `viVolume` (the container) becomes Angular, its AngularJS child scope disappears. Leaf directives (`viVolumeDecrease`, etc.) that called `scope.setVolume()` via scope inheritance must be updated to inject `videoPlayerContext` directly and call `videoPlayerContext.setVolume()`. Adding `setVolume()` to `VideoPlayerContext` centralizes volume management and removes the scope dependency.
+
+## Phase 4 Lessons
+
+### 28. The final AngularJS removal is best done as a single step
+
+Attempting to do Phase 4a (ngVideo → NgVideoComponent) as a hybrid step creates a circular problem: the leaf directives (vi-screen, vi-controls-play, etc.) are AngularJS attribute directives that only work when AngularJS compiles the DOM. If the parent container becomes Angular and projects content via `<ng-content>`, the projected content is no longer AngularJS-compiled. So the leaf directives break.
+
+The solution is to do 4a + 4b + 4c together: convert the main directive, convert the controller, and remove AngularJS simultaneously. This works because all complex logic already lives in Angular services (`VideoPlayerContext`, `VideoEventService`). The remaining AngularJS attribute directives are trivial click handlers that can be replaced with `(click)` event bindings.
+
+### 29. Replace attribute directives with template event bindings, not Angular directives
+
+The 15+ AngularJS attribute directives (`vi-screen`, `vi-controls-play`, `vi-volume-decrease`, etc.) are all click event handlers that delegate to Angular services. Creating Angular attribute directives for each would be over-engineering. Instead, inline the logic:
+
+- `<span vi-controls-play>` → `<span (click)="play()">`
+- `<span vi-volume-decrease>` → `<span (click)="decreaseVolume()">`
+- `<video vi-screen>` → `<video (click)="onScreenClick()">`
+
+This eliminates ~8 directive files and keeps the logic visible in templates.
+
+### 30. `<ng-content>` wrappers become real components when AngularJS is removed
+
+During the hybrid period, several components (`ControlsComponent`, `VolumeComponent`, `PlaylistComponent`) were `<ng-content>` wrappers because their projected content used AngularJS features. When AngularJS is removed, these components get real templates with Angular bindings. The wrapper pattern was a temporary bridge, not the final architecture.
+
+### 31. `forceVideo` property must become observable for Angular consumption
+
+The AngularJS `$scope.$watch` on `video.forceVideo` worked because AngularJS digest cycles poll all watched expressions. Angular has no equivalent polling mechanism. Converting `forceVideo` from a plain property to a `Subject`-based observable (`forceVideo$`) allows `NgVideoComponent` to react to forced video changes via `subscribe()`.
+
+### 32. CSS selectors must be updated when `<section>` elements become custom elements
+
+When `<section class="video" ng-video>` becomes `<ng-video class="video">`, CSS selectors like `section.video` no longer match. Similarly, `<section vi-volume>` → `<vi-volume>` breaks `section.volume`. The fix is to remove tag-name requirements from selectors: `section.video` → `.video`, `section.controls` → `.controls`. Custom elements also need `display: block` since they default to `inline`.
+
+### 33. Component lifecycle ordering matters for initialization
+
+AppComponent's `ngOnInit` fires before NgVideoComponent's `ngAfterViewInit`. Placing `addSource()` calls in AppComponent's `ngOnInit` ensures playlist items exist when NgVideoComponent initializes and checks the playlist. The `videoAdded$` events are emitted before NgVideoComponent subscribes, but NgVideoComponent's init independently checks `playlist.getAll()` and opens the first video.

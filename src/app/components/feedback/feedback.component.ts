@@ -16,7 +16,7 @@ import { VideoOptions } from '../../models/video-source.model';
       Loading...
     </section>
 
-    <ng-content></ng-content>
+    <vi-volume class="volume"></vi-volume>
 
     <section class="duration">
       {{ currentTime | number:'1.2-2' }}s of {{ duration | number:'1.2-2' }}s
