@@ -1,6 +1,8 @@
 # ngVideo
 
-An HTML5 video player library built with Angular 17. Available as both an Angular module and a **Web Components library** (via Angular Elements) — use `<ng-video>` in any HTML page with a single script tag.
+An HTML5 video player library built with Angular 17 with **Web Components library** (via Angular Elements) — use `<ng-video>` in any HTML page with a single script tag.
+
+Demo available by building the app.
 
 ## Prerequisites
 
@@ -13,8 +15,15 @@ An HTML5 video player library built with Angular 17. Available as both an Angula
 npm install
 ```
 
-## Running
+**Web Components build:**
 
+```bash
+npm run build:elements
+```
+Produces `dist/ng-video-elements/ng-video-bundle.js` — a single script that registers all components as custom elements.
+
+## Demo
+### Angular server demo
 **Development server:**
 
 ```bash
@@ -23,21 +32,13 @@ npm start
 
 Opens at [http://localhost:4200](http://localhost:4200).
 
-**Production build (Angular app):**
-
-```bash
-npm run build
-```
-
-Output goes to `dist/ng-video-angular/`.
-
-**Web Components build:**
+### Running Web Components site
+A demo page is available at `website/index.html`. Build the elements bundle first, then open the file in a browser:
 
 ```bash
 npm run build:elements
+open website/index.html
 ```
-
-Produces `dist/ng-video-elements/ng-video-bundle.js` — a single script that registers all components as custom elements.
 
 ## Testing
 
@@ -55,7 +56,7 @@ npm run test:e2e
 
 ## Usage
 
-### Web Components (standalone — no Angular required)
+### Web Components (standalone)
 
 Include the bundle and use the custom element tags in any HTML page:
 
@@ -164,14 +165,7 @@ source.save();
 | `BUFFER_HEIGHT` | `1` | Buffer canvas height |
 | `BUFFER_WIDTH` | `485` | Buffer canvas width |
 
-## Demo
 
-A demo page is available at `website/index.html`. Build the elements bundle first, then open the file in a browser:
-
-```bash
-npm run build:elements
-open website/index.html
-```
 
 ## Known Limitations
 
